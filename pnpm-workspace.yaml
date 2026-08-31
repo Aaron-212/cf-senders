@@ -1,2 +1,7 @@
+allowBuilds:
+  dprint: true
+  esbuild: true
+  workerd: true
+
 minimumReleaseAgeExclude:
   - "@lucide/svelte"

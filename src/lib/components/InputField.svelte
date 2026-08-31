@@ -44,11 +44,10 @@ const isInvalid = $derived(invalid ?? Boolean(errorText));
   invalid={isInvalid}
   {readOnly}
   {required}
-  class={`flex w-full min-w-0 max-w-full flex-row items-start gap-2 ${className ?? ""}`}
+  class={`flex w-full min-w-0 max-w-full flex-row items-start gap-4 ${className ?? ""}`}
 >
   <ArkField.Label class="text-md shrink-0 py-2 text-slate-700 dark:text-slate-300">
     {label}
-    <ArkField.RequiredIndicator class="ml-1 text-red-500" />
   </ArkField.Label>
 
   <div class="flex min-w-0 max-w-full flex-1 flex-col">

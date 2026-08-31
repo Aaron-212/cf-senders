@@ -71,7 +71,7 @@ const handleValueInvalid: NonNullable<TagsInputRootProps["onValueInvalid"]> = (d
   onInputValueChange={handleInputValueChange}
   onValueInvalid={handleValueInvalid}
   placeholder={placeholder ?? undefined}
-  class={`flex w-full min-w-0 max-w-full flex-row items-start gap-2 ${className ?? ""}`}
+  class={`flex w-full min-w-0 max-w-full flex-row items-start gap-4 ${className ?? ""}`}
 >
   <ArkTagsInput.Label class="text-md shrink-0 py-2 text-slate-700 dark:text-slate-300">
     {label}

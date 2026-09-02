@@ -16,8 +16,8 @@ mise exec -- aubr dev
 
 - `mise exec -- aubr build` creates the production bundle in `.svelte-kit/cloudflare/`.
 - `mise exec -- aubr preview` serves the built site locally.
-- `mise exec -- aubr check` runs Svelte type checking, ESLint, and dprint validation.
-- `mise exec -- aubr format` applies dprint formatting.
+- `mise exec -- aubr check` runs Svelte type checking, Oxlint, and Oxfmt validation.
+- `mise exec -- aubr format` applies Oxfmt formatting.
 - `mise exec -- aubr deploy:dry-run` builds and validates the Wrangler deployment without publishing.
 - `mise exec -- aubr deploy` publishes to Cloudflare; run it only with the appropriate account access.
 
@@ -26,7 +26,7 @@ Use `mise exec -- aube add ...`
 
 ## Coding Style & Naming Conventions
 
-Use TypeScript-compatible Svelte components and the strict SvelteKit TypeScript configuration. dprint enforces two-space JSON indentation, double quotes, and semicolons in TypeScript/JavaScript. Run `aube run format` before submitting changes. ESLint uses the recommended JavaScript, TypeScript, and Svelte rules. Name reusable Svelte components in `PascalCase` (`SenderForm.svelte`), use SvelteKit's route filenames (`+page.svelte`, `+layout.svelte`), and name CSS classes according to Tailwind conventions.
+Use TypeScript-compatible Svelte components and the strict SvelteKit TypeScript configuration. Oxfmt enforces two-space indentation, double quotes, semicolons in TypeScript/JavaScript, and a 120-column print width. Run `aube run format` before submitting changes. Oxlint checks JavaScript, TypeScript, and Svelte script blocks with its correctness-focused defaults, and warnings fail validation. Name reusable Svelte components in `PascalCase` (`SenderForm.svelte`), use SvelteKit's route filenames (`+page.svelte`, `+layout.svelte`), and name CSS classes according to Tailwind conventions.
 
 ## Testing Guidelines
 

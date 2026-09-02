@@ -3,23 +3,18 @@
   "name": "cf-senders",
   "main": ".svelte-kit/cloudflare/_worker.js",
   "compatibility_date": "2026-08-31",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "preview_urls": false,
   "assets": {
     "binding": "ASSETS",
-    "directory": ".svelte-kit/cloudflare"
+    "directory": ".svelte-kit/cloudflare",
   },
   "secrets": {
-    "required": [
-      "POLICY_AUD",
-      "TEAM_DOMAIN"
-    ]
+    "required": ["POLICY_AUD", "TEAM_DOMAIN"],
   },
   "send_email": [
     {
-      "name": "EMAIL"
-    }
-  ]
+      "name": "EMAIL",
+    },
+  ],
 }

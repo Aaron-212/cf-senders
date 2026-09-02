@@ -2,24 +2,22 @@
 import { Field as ArkField } from "@ark-ui/svelte/field";
 import type { FieldInputProps } from "@ark-ui/svelte/field";
 
-type Props =
-  & Omit<
-    FieldInputProps,
-    "asChild" | "children" | "class" | "disabled" | "readonly" | "ref" | "required" | "value"
-  >
-  & {
-    class?: string;
-    disabled?: boolean;
-    errorText?: string;
-    helperText?: string;
-    inputClass?: string;
-    invalid?: boolean;
-    label: string;
-    readOnly?: boolean;
-    ref?: FieldInputProps["ref"];
-    required?: boolean;
-    value?: FieldInputProps["value"];
-  };
+type Props = Omit<
+  FieldInputProps,
+  "asChild" | "children" | "class" | "disabled" | "readonly" | "ref" | "required" | "value"
+> & {
+  class?: string;
+  disabled?: boolean;
+  errorText?: string;
+  helperText?: string;
+  inputClass?: string;
+  invalid?: boolean;
+  label: string;
+  readOnly?: boolean;
+  ref?: FieldInputProps["ref"];
+  required?: boolean;
+  value?: FieldInputProps["value"];
+};
 
 let {
   value = $bindable(),

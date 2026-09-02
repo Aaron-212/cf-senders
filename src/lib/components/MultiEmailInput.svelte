@@ -6,19 +6,14 @@ import { X } from "@lucide/svelte";
 
 import { isValidEmail } from "@/lib/email";
 
-type Props =
-  & Omit<
-    TagsInputRootProps,
-    "children" | "class" | "placeholder" | "value"
-  >
-  & {
-    class?: string;
-    errorText?: string;
-    helperText?: string;
-    label?: string;
-    placeholder?: string | null;
-    value?: string[];
-  };
+type Props = Omit<TagsInputRootProps, "children" | "class" | "placeholder" | "value"> & {
+  class?: string;
+  errorText?: string;
+  helperText?: string;
+  label?: string;
+  placeholder?: string | null;
+  value?: string[];
+};
 
 let {
   value = $bindable<string[]>([]),
@@ -45,7 +40,7 @@ const resolvedErrorText = $derived(errorText ?? (inputInvalid ? "Enter a valid e
 const handleInputValueChange: NonNullable<TagsInputRootProps["onInputValueChange"]> = (details) => {
   if (details.inputValue === "" && rejectedInput !== null) {
     const valueToRestore = rejectedInput;
-    globalThis.queueMicrotask(() => inputValue = valueToRestore);
+    globalThis.queueMicrotask(() => (inputValue = valueToRestore));
     rootProps.onInputValueChange?.({ inputValue: valueToRestore });
     return;
   }

@@ -2,27 +2,18 @@
 import { Field as ArkField } from "@ark-ui/svelte/field";
 import type { FieldTextareaProps } from "@ark-ui/svelte/field";
 
-type Props =
-  & Omit<
-    FieldTextareaProps,
-    | "asChild"
-    | "children"
-    | "class"
-    | "disabled"
-    | "readonly"
-    | "ref"
-    | "required"
-    | "value"
-  >
-  & {
-    class?: string;
-    disabled?: boolean;
-    readOnly?: boolean;
-    ref?: FieldTextareaProps["ref"];
-    required?: boolean;
-    textareaClass?: string;
-    value?: FieldTextareaProps["value"];
-  };
+type Props = Omit<
+  FieldTextareaProps,
+  "asChild" | "children" | "class" | "disabled" | "readonly" | "ref" | "required" | "value"
+> & {
+  class?: string;
+  disabled?: boolean;
+  readOnly?: boolean;
+  ref?: FieldTextareaProps["ref"];
+  required?: boolean;
+  textareaClass?: string;
+  value?: FieldTextareaProps["value"];
+};
 
 let {
   value = $bindable(),
@@ -36,12 +27,7 @@ let {
 }: Props = $props();
 </script>
 
-<ArkField.Root
-  {disabled}
-  {readOnly}
-  {required}
-  class={`flex w-full min-w-0 max-w-full ${className ?? ""}`}
->
+<ArkField.Root {disabled} {readOnly} {required} class={`flex w-full min-w-0 max-w-full ${className ?? ""}`}>
   <ArkField.Textarea
     {...textareaProps}
     bind:ref

@@ -113,17 +113,17 @@ for end-to-end email testing.
 
 Run project scripts through the versions pinned in `mise.toml`:
 
-| Command                            | Description                                                             |
-| ---------------------------------- | ----------------------------------------------------------------------- |
-| `mise exec -- aubr dev`            | Start the Vite development server.                                      |
-| `mise exec -- aubr build`          | Build the Worker in `.svelte-kit/cloudflare/`.                          |
-| `mise exec -- aubr preview`        | Preview the production build locally.                                   |
-| `mise exec -- aubr check`          | Run Wrangler type checks, Svelte checks, ESLint, and dprint validation. |
-| `mise exec -- aubr test`           | Run all static checks and the Cloudflare Access tests.                  |
-| `mise exec -- aubr format`         | Format supported source and configuration files.                        |
-| `mise exec -- aubr cf-typegen`     | Regenerate Worker binding types from `wrangler.jsonc`.                  |
-| `mise exec -- aubr deploy:dry-run` | Build and validate the Wrangler deployment without publishing.          |
-| `mise exec -- aubr deploy`         | Build and deploy to Cloudflare Workers.                                 |
+| Command                            | Description                                                            |
+| ---------------------------------- | ---------------------------------------------------------------------- |
+| `mise exec -- aubr dev`            | Start the Vite development server.                                     |
+| `mise exec -- aubr build`          | Build the Worker in `.svelte-kit/cloudflare/`.                         |
+| `mise exec -- aubr preview`        | Preview the production build locally.                                  |
+| `mise exec -- aubr check`          | Run Wrangler type checks, Svelte checks, Oxlint, and Oxfmt validation. |
+| `mise exec -- aubr test`           | Run all static checks and the Cloudflare Access tests.                 |
+| `mise exec -- aubr format`         | Format supported source and configuration files.                       |
+| `mise exec -- aubr cf-typegen`     | Regenerate Worker binding types from `wrangler.jsonc`.                 |
+| `mise exec -- aubr deploy:dry-run` | Build and validate the Wrangler deployment without publishing.         |
+| `mise exec -- aubr deploy`         | Build and deploy to Cloudflare Workers.                                |
 
 ## Project structure
 

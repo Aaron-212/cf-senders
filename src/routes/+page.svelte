@@ -81,8 +81,7 @@ const submitEmail: SubmitFunction = ({ cancel }) => {
       } else if (result.type === "failure") {
         toaster.error({
           title: "Couldn’t send email",
-          description: result.data?.error
-            ?? "The email could not be sent. Try again later.",
+          description: result.data?.error ?? "The email could not be sent. Try again later.",
         });
       }
     } finally {
@@ -93,11 +92,7 @@ const submitEmail: SubmitFunction = ({ cancel }) => {
 </script>
 
 <main class="flex h-[calc(100dvh-4rem)] min-h-0 flex-col gap-4">
-  <form
-    method="POST"
-    use:enhance={submitEmail}
-    class="flex min-h-0 flex-1 flex-col gap-4"
-  >
+  <form method="POST" use:enhance={submitEmail} class="flex min-h-0 flex-1 flex-col gap-4">
     <div class="grid grid-cols-[1fr_auto_auto] items-center gap-2 sm:gap-4">
       <h1 class="text-4xl font-semibold">CF Senders</h1>
       <Collapsible
@@ -124,13 +119,7 @@ const submitEmail: SubmitFunction = ({ cancel }) => {
           <MultiEmailInput bind:value={sendcc} name="sendcc" label="CC" addOnPaste />
           <MultiEmailInput bind:value={sendbcc} name="sendbcc" label="BCC" addOnPaste />
         </div>
-        <MultiEmailInput
-          bind:value={sendreply}
-          name="sendreply"
-          label="Reply To"
-          addOnPaste
-          max={1}
-        />
+        <MultiEmailInput bind:value={sendreply} name="sendreply" label="Reply To" addOnPaste max={1} />
         <EmailInput bind:value={sendfrom} name="from" label="From" required />
         <InputField bind:value={sendsubject} type="text" name="subject" label="Subject" required />
       </Collapsible>
@@ -181,9 +170,7 @@ const submitEmail: SubmitFunction = ({ cancel }) => {
       name="body"
       class="min-h-0 flex-1 overflow-hidden rounded-2xl bg-white p-2 text-lg dark:bg-black"
       textareaClass="px-2 py-1"
-      style="min-height: 0;
-overflow-y: auto;
-resize: none;"
+      style="min-height: 0; overflow-y: auto; resize: none;"
     />
   </form>
 </main>

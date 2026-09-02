@@ -11,7 +11,7 @@ const env = { POLICY_AUD, TEAM_DOMAIN };
 
 const { privateKey, publicKey } = await generateKeyPair("RS256", { extractable: true });
 const publicJwk = {
-  ...await exportJWK(publicKey),
+  ...(await exportJWK(publicKey)),
   alg: "RS256",
   kid: "test-key",
   use: "sig",

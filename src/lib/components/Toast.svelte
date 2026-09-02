@@ -2,7 +2,7 @@
 import { Toast as ArkToast, Toaster } from "@ark-ui/svelte/toast";
 import type { CreateToasterReturn } from "@ark-ui/svelte/toast";
 
-let { toaster }: { toaster: CreateToasterReturn; } = $props();
+let { toaster }: { toaster: CreateToasterReturn } = $props();
 </script>
 
 <Toaster {toaster}>

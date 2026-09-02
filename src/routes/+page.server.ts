@@ -51,9 +51,10 @@ const emptyFormValues = (): FormValues => ({
 
 const getEmailServiceError = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
-  const code = typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
-    ? error.code
-    : undefined;
+  const code =
+    typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
+      ? error.code
+      : undefined;
 
   return { code, message };
 };
@@ -143,11 +144,13 @@ export const actions = {
       const serviceError = getEmailServiceError(error);
       const clientError = getClientError(serviceError.code);
 
-      console.error(JSON.stringify({
-        message: "Email sending failed",
-        code: serviceError.code,
-        error: serviceError.message,
-      }));
+      console.error(
+        JSON.stringify({
+          message: "Email sending failed",
+          code: serviceError.code,
+          error: serviceError.message,
+        }),
+      );
 
       return fail(clientError.status, { success: false, error: clientError.message, values });
     }

@@ -4,24 +4,22 @@ import type { FieldInputProps } from "@ark-ui/svelte/field";
 
 import { isValidEmail } from "@/lib/email";
 
-type Props =
-  & Omit<
-    FieldInputProps,
-    "asChild" | "children" | "class" | "disabled" | "readonly" | "ref" | "required" | "type" | "value"
-  >
-  & {
-    class?: string;
-    disabled?: boolean;
-    errorText?: string;
-    helperText?: string;
-    inputClass?: string;
-    invalid?: boolean;
-    label: string;
-    readOnly?: boolean;
-    ref?: FieldInputProps["ref"];
-    required?: boolean;
-    value?: string;
-  };
+type Props = Omit<
+  FieldInputProps,
+  "asChild" | "children" | "class" | "disabled" | "readonly" | "ref" | "required" | "type" | "value"
+> & {
+  class?: string;
+  disabled?: boolean;
+  errorText?: string;
+  helperText?: string;
+  inputClass?: string;
+  invalid?: boolean;
+  label: string;
+  readOnly?: boolean;
+  ref?: FieldInputProps["ref"];
+  required?: boolean;
+  value?: string;
+};
 
 let {
   value = $bindable(""),

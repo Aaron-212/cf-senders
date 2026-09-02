@@ -8,29 +8,25 @@ type AccessEnvironment = Readonly<{
   TEAM_DOMAIN: string;
 }>;
 
-type AccessFailureReason =
-  | "invalid_configuration"
-  | "invalid_token"
-  | "missing_configuration"
-  | "missing_token";
+type AccessFailureReason = "invalid_configuration" | "invalid_token" | "missing_configuration" | "missing_token";
 
 export type AccessValidationResult =
-  | { authenticated: true; claims: JWTPayload; }
-  | { authenticated: false; reason: AccessFailureReason; };
+  | { authenticated: true; claims: JWTPayload }
+  | { authenticated: false; reason: AccessFailureReason };
 
 const getTeamDomain = (value: string) => {
   try {
     const url = new URL(value);
 
     if (
-      url.protocol !== "https:"
-      || url.username
-      || url.password
-      || url.port
-      || url.pathname !== "/"
-      || url.search
-      || url.hash
-      || !url.hostname.endsWith(ACCESS_DOMAIN_SUFFIX)
+      url.protocol !== "https:" ||
+      url.username ||
+      url.password ||
+      url.port ||
+      url.pathname !== "/" ||
+      url.search ||
+      url.hash ||
+      !url.hostname.endsWith(ACCESS_DOMAIN_SUFFIX)
     ) {
       return undefined;
     }

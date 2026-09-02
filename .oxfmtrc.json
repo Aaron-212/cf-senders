@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 120,
+  "semi": true,
+  "singleQuote": false,
+  "sortPackageJson": false,
+  "svelte": {
+    "indentScriptAndStyle": false
+  },
+  "tabWidth": 2,
+  "ignorePatterns": ["pnpm-lock.yaml", "worker-configuration.d.ts"]
+}

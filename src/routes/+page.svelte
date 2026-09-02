@@ -144,6 +144,7 @@ const submitEmail: SubmitFunction = ({ cancel }) => {
         <span class="font-medium text-white">{sending ? "Sending…" : "Send"}</span>
       </button>
     </div>
+    <!--
     <div class="flex flex-row gap-2">
       <button
         type="button"
@@ -174,6 +175,7 @@ const submitEmail: SubmitFunction = ({ cancel }) => {
         <Strikethrough class="size-4" />
       </button>
     </div>
+    -->
     <PlainTextEditor
       bind:value={sendbody}
       name="body"

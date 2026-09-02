@@ -16,6 +16,10 @@
     "enabled": true,
     "head_sampling_rate": 1
   },
+  "vars": {
+    "POLICY_AUD": "",
+    "TEAM_DOMAIN": ""
+  },
   "send_email": [
     {
       "name": "EMAIL"

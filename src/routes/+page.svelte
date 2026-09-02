@@ -4,14 +4,7 @@ import { createToaster } from "@ark-ui/svelte/toast";
 import type { SubmitFunction } from "@sveltejs/kit";
 import { untrack } from "svelte";
 
-import {
-  Collapsible,
-  EmailInput,
-  InputField,
-  MultiEmailInput,
-  PlainTextEditor,
-  Toast,
-} from "@/lib/components";
+import { Collapsible, EmailInput, InputField, MultiEmailInput, PlainTextEditor, Toast } from "@/lib/components";
 import { ArrowUp, Bold, ChevronDown, Italic, Strikethrough, Underline } from "@lucide/svelte";
 
 import type { PageProps } from "./$types";

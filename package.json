@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "check": "wrangler types --check && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && eslint . && dprint check",
     "format": "dprint fmt",
-    "test": "wrangler types --check && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && eslint . && dprint check",
+    "test": "wrangler types --check && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && eslint . && dprint check && node --test src/lib/server/cloudflare-access.test.mjs",
     "deploy": "vite build && wrangler deploy",
     "deploy:dry-run": "vite build && wrangler deploy --dry-run"
   },
@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@ark-ui/svelte": "^5.24.1",
-    "@lucide/svelte": "^1.38.0"
+    "@lucide/svelte": "^1.38.0",
+    "jose": "^6.2.10"
   }
 }

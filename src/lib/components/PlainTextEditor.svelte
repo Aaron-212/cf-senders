@@ -5,7 +5,14 @@ import type { FieldTextareaProps } from "@ark-ui/svelte/field";
 type Props =
   & Omit<
     FieldTextareaProps,
-    "asChild" | "children" | "class" | "disabled" | "readonly" | "ref" | "required" | "value"
+    | "asChild"
+    | "children"
+    | "class"
+    | "disabled"
+    | "readonly"
+    | "ref"
+    | "required"
+    | "value"
   >
   & {
     class?: string;
@@ -39,7 +46,7 @@ let {
     {...textareaProps}
     bind:ref
     bind:value
-    class={`min-h-32 min-w-32 flex-1 resize-y bg-transparent text-md outline-none placeholder:text-slate-400 disabled:cursor-not-allowed ${
+    class={`min-h-64 min-w-64 flex-1 bg-transparent resize-none text-md outline-none placeholder:text-slate-400 disabled:cursor-not-allowed ${
       textareaClass ?? ""
     }`}
   />

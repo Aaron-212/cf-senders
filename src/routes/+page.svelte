@@ -23,7 +23,7 @@ let sendbody = $state<string>(initialValues?.body ?? "");
 let sending = $state(false);
 
 const toaster = createToaster({ placement: "bottom-end", overlap: true, gap: 12 });
-const MAX_TO_RECIPIENTS = 50;
+const MAX_RECIPIENTS = 50;
 
 const validateToRecipients = () => {
   if (sendto.length === 0) {
@@ -34,10 +34,10 @@ const validateToRecipients = () => {
     return false;
   }
 
-  if (sendto.length > MAX_TO_RECIPIENTS) {
+  if (sendto.length + sendcc.length + sendbcc.length > MAX_RECIPIENTS) {
     toaster.error({
       title: "Couldn’t send email",
-      description: `Use no more than ${MAX_TO_RECIPIENTS} To recipients.`,
+      description: `Use no more than ${MAX_RECIPIENTS} recipients in total.`,
     });
     return false;
   }

@@ -94,6 +94,12 @@ Pages > cf-senders > Settings > Variables and Secrets**.
 > [!CAUTION]
 > Never commit the dotenv file!
 
+### 4. Custom Domain
+
+Add the custom domain in the Worker's domain settings.
+Then deploy the `production` environment with `wrangler deploy --env production`,
+or change the deployment command in Worker's settings.
+
 ## Development
 
 Install the toolchain and dependencies, then start Vite:

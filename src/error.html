@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+    <title>%sveltekit.status% · %sveltekit.error.message%</title>
+    <style>
+      :root {
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          "Helvetica Neue",
+          sans-serif;
+        text-autospace: auto;
+      }
+
+      html,
+      body,
+      main {
+        width: 100%;
+        height: 100%;
+        background-color: #ffffff;
+        color: #000000;
+        -webkit-user-select: none;
+
+        @media (prefers-color-scheme: dark) {
+          background-color: #0a0a0a;
+          color: #ffffff;
+        }
+      }
+
+      body {
+        margin: 0;
+      }
+
+      .container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: flex-row;
+        align-items: center;
+        justify-content: center;
+        place-items: center;
+        gap: 1rem;
+      }
+
+      .status-code {
+        font-size: 3rem;
+        font-weight: 600;
+      }
+
+      .message {
+        font-size: 3rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <div class="container">
+        <span class="status-code">%sveltekit.status%</span>
+        <span class="message">%sveltekit.error.message%</span>
+      </div>
+    </main>
+  </body>
+</html>

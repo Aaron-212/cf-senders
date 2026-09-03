@@ -1,8 +1,18 @@
+import { dev } from "$app/environment";
 import type { Handle } from "@sveltejs/kit";
 
 import { validateCloudflareAccess } from "@/lib/server/cloudflare-access";
 
 export const handle: Handle = async ({ event, resolve }) => {
+  if (dev) {
+    event.locals.access = {
+      sub: "local-development",
+      email: "local@localhost",
+    };
+
+    return resolve(event);
+  }
+
   const access = await validateCloudflareAccess(event.request, event.platform?.env);
 
   if (!access.authenticated) {

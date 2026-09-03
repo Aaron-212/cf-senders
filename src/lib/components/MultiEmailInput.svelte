@@ -1,126 +1,213 @@
 <script lang="ts">
-import { TagsInput as ArkTagsInput } from "@ark-ui/svelte/tags-input";
-import type { TagsInputRootProps } from "@ark-ui/svelte/tags-input";
-
+import { Badge } from "@/lib/components/ui/badge";
+import * as InputGroup from "@/lib/components/ui/input-group";
 import { X } from "@lucide/svelte";
+import type { ClipboardEventHandler, FocusEventHandler, KeyboardEventHandler } from "svelte/elements";
 
 import { isValidEmail } from "@/lib/email";
 
-type Props = Omit<TagsInputRootProps, "children" | "class" | "placeholder" | "value"> & {
-  class?: string;
-  errorText?: string;
-  helperText?: string;
-  label?: string;
+type ValueChangeDetails = { value: string[] };
+type InputValueChangeDetails = { inputValue: string };
+type ValueInvalidDetails = {
+  reason: "invalidTag" | "rangeOverflow";
+  values: string[];
+};
+
+type Props = {
+  addOnPaste?: boolean;
+  allowDuplicates?: boolean;
+  allowOverflow?: boolean;
+  autoFocus?: boolean;
+  blurBehavior?: "add" | "clear";
+  delimiter?: string | RegExp;
+  disabled?: boolean;
+  form?: string;
+  id?: string;
+  inputValue?: string;
+  invalid?: boolean;
+  max?: number;
+  maxLength?: number;
+  name?: string;
+  onInputValueChange?: (details: InputValueChangeDetails) => void;
+  onValueChange?: (details: ValueChangeDetails) => void;
+  onValueInvalid?: (details: ValueInvalidDetails) => void;
   placeholder?: string | null;
+  readOnly?: boolean;
+  required?: boolean;
+  sanitizeValue?: (value: string) => string;
+  validate?: (details: { inputValue: string; value: string[] }) => boolean;
   value?: string[];
 };
 
 let {
   value = $bindable<string[]>([]),
-  label = "Emails",
+  inputValue = $bindable(""),
   placeholder,
-  helperText,
-  errorText,
-  class: className,
-  ...rootProps
+  addOnPaste = false,
+  allowDuplicates = false,
+  allowOverflow = false,
+  autoFocus = false,
+  blurBehavior,
+  delimiter = ",",
+  disabled = false,
+  form,
+  id,
+  invalid = false,
+  max = Number.POSITIVE_INFINITY,
+  maxLength,
+  name,
+  onInputValueChange,
+  onValueChange,
+  onValueInvalid,
+  readOnly = false,
+  required = false,
+  sanitizeValue = (candidate) => candidate.trim(),
+  validate,
 }: Props = $props();
 
-let inputValue = $state("");
-let inputInvalid = $state(false);
-let rejectedInput: string | null = null;
+let invalidReason = $state<ValueInvalidDetails["reason"] | null>(null);
 
-const validateInput = (candidate: string) => {
-  const delimiter = rootProps.delimiter ?? ",";
-  return candidate.split(delimiter).every(isValidEmail);
+const isInvalid = $derived(invalidReason !== null || invalid || value.length > max);
+const serializedValue = $derived(value.join(typeof delimiter === "string" ? delimiter : ","));
+
+const setInputValue = (nextValue: string) => {
+  inputValue = nextValue;
+  invalidReason = null;
+  onInputValueChange?.({ inputValue: nextValue });
 };
 
-const isInvalid = $derived(inputInvalid || Boolean(rootProps.invalid));
-const resolvedErrorText = $derived(errorText ?? (inputInvalid ? "Enter a valid email address." : undefined));
+const setValue = (nextValue: string[]) => {
+  value = nextValue;
+  onValueChange?.({ value: nextValue });
+};
 
-const handleInputValueChange: NonNullable<TagsInputRootProps["onInputValueChange"]> = (details) => {
-  if (details.inputValue === "" && rejectedInput !== null) {
-    const valueToRestore = rejectedInput;
-    globalThis.queueMicrotask(() => (inputValue = valueToRestore));
-    rootProps.onInputValueChange?.({ inputValue: valueToRestore });
+const reject = (reason: ValueInvalidDetails["reason"], values: string[]) => {
+  invalidReason = reason;
+  onValueInvalid?.({ reason, values });
+};
+
+const splitCandidates = (candidate: string) => candidate.split(delimiter).map(sanitizeValue).filter(Boolean);
+
+const commit = (candidate: string) => {
+  const candidates = splitCandidates(candidate);
+  if (candidates.length === 0) return true;
+
+  if (
+    candidates.some(
+      (email) =>
+        !isValidEmail(email) ||
+        (validate !== undefined && !validate({ inputValue: email, value })) ||
+        (!allowDuplicates && value.includes(email)),
+    ) ||
+    (!allowDuplicates && new Set(candidates).size !== candidates.length)
+  ) {
+    reject("invalidTag", candidates);
+    return false;
+  }
+
+  const nextValue = [...value, ...candidates];
+  if (!allowOverflow && nextValue.length > max) {
+    reject("rangeOverflow", candidates);
+    return false;
+  }
+
+  setValue(nextValue);
+  setInputValue("");
+  return true;
+};
+
+const remove = (index: number) => {
+  if (disabled || readOnly) return;
+  setValue(value.filter((_, valueIndex) => valueIndex !== index));
+};
+
+const clear = () => {
+  if (disabled || readOnly) return;
+  setValue([]);
+  invalidReason = null;
+};
+
+const handleInput = (event: Event & { currentTarget: HTMLInputElement }) => {
+  const nextValue = event.currentTarget.value;
+  setInputValue(nextValue);
+
+  if (typeof delimiter === "string" && delimiter.length === 1 && nextValue.endsWith(delimiter)) {
+    commit(nextValue.slice(0, -delimiter.length));
+  }
+};
+
+const handleKeydown: KeyboardEventHandler<HTMLInputElement> = (event) => {
+  if (event.isComposing || disabled || readOnly) return;
+
+  if (event.key === "Enter" || event.key === " " || (typeof delimiter === "string" && event.key === delimiter)) {
+    event.preventDefault();
+    commit(inputValue);
     return;
   }
 
-  rejectedInput = null;
-  inputInvalid = false;
-  rootProps.onInputValueChange?.(details);
+  if (event.key === "Backspace" && inputValue === "" && value.length > 0) {
+    remove(value.length - 1);
+  }
 };
 
-const handleValueInvalid: NonNullable<TagsInputRootProps["onValueInvalid"]> = (details) => {
-  inputInvalid = details.reason === "invalidTag";
-  rejectedInput = inputInvalid ? inputValue : null;
-  rootProps.onValueInvalid?.(details);
+const handlePaste: ClipboardEventHandler<HTMLInputElement> = (event) => {
+  if (!addOnPaste || disabled || readOnly) return;
+
+  event.preventDefault();
+  const pastedValue = event.clipboardData?.getData("text") ?? "";
+  setInputValue(pastedValue);
+  commit(pastedValue);
+};
+
+const handleBlur: FocusEventHandler<HTMLInputElement> = () => {
+  if (blurBehavior === "add") commit(inputValue);
+  if (blurBehavior === "clear") setInputValue("");
 };
 </script>
 
-<ArkTagsInput.Root
-  {...rootProps}
-  bind:value
-  bind:inputValue
-  invalid={isInvalid}
-  validate={({ inputValue: candidate }) => validateInput(candidate)}
-  onInputValueChange={handleInputValueChange}
-  onValueInvalid={handleValueInvalid}
-  placeholder={placeholder ?? undefined}
-  class={`flex w-full min-w-0 max-w-full flex-row items-start gap-4 ${className ?? ""}`}
->
-  <ArkTagsInput.Label class="text-md shrink-0 py-2 text-slate-700 dark:text-slate-300">
-    {label}
-  </ArkTagsInput.Label>
-
-  <div class="flex min-w-0 max-w-full flex-1 flex-col">
-    <ArkTagsInput.Control
-      class="flex min-w-0 max-w-full flex-1 flex-row flex-wrap items-center gap-x-2 gap-y-1 border-b border-slate-300 p-1 transition-colors focus-within:border-slate-500 data-disabled:cursor-not-allowed data-disabled:opacity-50 data-invalid:border-red-500 dark:border-slate-700 dark:focus-within:border-slate-500 dark:data-invalid:border-red-400"
-    >
+<InputGroup.Root data-disabled={disabled} class="h-auto min-h-9 flex-wrap gap-1">
+  {#if value.length > 0}
+    <InputGroup.Addon class="flex-wrap gap-1 justify-start">
       {#each value as tag, index (`${tag}-${index}`)}
-        <ArkTagsInput.Item {index} value={tag} class="min-w-0 max-w-full">
-          <ArkTagsInput.ItemPreview
-            class="flex max-w-full items-center gap-1 rounded-lg bg-blue-200 px-2 py-1 text-sm text-slate-800 data-highlighted:bg-blue-500 data-highlighted:text-slate-100 dark:bg-blue-950 dark:text-slate-100"
+        <Badge variant="outline" class="max-w-full bg-white dark:bg-black">
+          <span class="min-w-0 truncate">{tag}</span>
+          <button
+            aria-label={`Remove ${tag}`}
+            disabled={disabled || readOnly}
+            onclick={() => remove(index)}
+            class="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors size-3 rounded-full"
           >
-            <ArkTagsInput.ItemText class="min-w-0 truncate">{tag}</ArkTagsInput.ItemText>
-            <ArkTagsInput.ItemDeleteTrigger
-              class="grid size-4 shrink-0 place-items-center rounded hover:bg-slate-500"
-              aria-label={`Remove ${tag}`}
-            >
-              <X class="size-4" aria-hidden="true" />
-            </ArkTagsInput.ItemDeleteTrigger>
-          </ArkTagsInput.ItemPreview>
-          <ArkTagsInput.ItemInput
-            class="min-w-20 rounded-lg bg-transparent px-2 py-1 text-sm outline-none ring-2 ring-blue-500"
-          />
-        </ArkTagsInput.Item>
+            <X aria-hidden="true" class="size-3" />
+          </button>
+        </Badge>
       {/each}
+    </InputGroup.Addon>
+  {/if}
 
-      <ArkTagsInput.Input
-        placeholder={placeholder ?? ""}
-        class="min-w-32 flex-1 bg-transparent px-2 py-1 text-md outline-none placeholder:text-slate-400 disabled:cursor-not-allowed"
-      />
+  <InputGroup.Input
+    {id}
+    value={inputValue}
+    placeholder={placeholder ?? ""}
+    {disabled}
+    readonly={readOnly}
+    required={required && value.length === 0}
+    maxlength={maxLength}
+    autofocus={autoFocus}
+    aria-invalid={isInvalid}
+    class="min-w-32"
+    oninput={handleInput}
+    onkeydown={handleKeydown}
+    onpaste={handlePaste}
+    onblur={handleBlur}
+  />
 
-      {#if value.length > 0}
-        <ArkTagsInput.ClearTrigger
-          class="shrink-0 rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-red-200 hover:text-red-500 dark:text-slate-400 dark:hover:bg-red-900 dark:hover:text-red-300"
-        >
-          Clear
-        </ArkTagsInput.ClearTrigger>
-      {/if}
-    </ArkTagsInput.Control>
+  {#if value.length > 0}
+    <InputGroup.Addon align="inline-end" class="py-0 pr-2">
+      <InputGroup.Button disabled={disabled || readOnly} onclick={clear}>Clear</InputGroup.Button>
+    </InputGroup.Addon>
+  {/if}
+</InputGroup.Root>
 
-    {#if helperText}
-      <p class="px-2 pt-1 text-sm text-slate-500 dark:text-slate-400">
-        {helperText}
-      </p>
-    {/if}
-
-    {#if isInvalid && resolvedErrorText}
-      <p class="px-2 pt-1 text-sm text-red-500 dark:text-red-400" role="alert">
-        {resolvedErrorText}
-      </p>
-    {/if}
-  </div>
-
-  <ArkTagsInput.HiddenInput />
-</ArkTagsInput.Root>
+{#if name}
+  <input type="hidden" {name} {form} value={serializedValue} />
+{/if}

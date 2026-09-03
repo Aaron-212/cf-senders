@@ -1,18 +1,16 @@
 <script lang="ts">
-import { Field as ArkField } from "@ark-ui/svelte/field";
-import type { FieldTextareaProps } from "@ark-ui/svelte/field";
+import { Textarea } from "@/lib/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import type { HTMLTextareaAttributes } from "svelte/elements";
 
-type Props = Omit<
-  FieldTextareaProps,
-  "asChild" | "children" | "class" | "disabled" | "readonly" | "ref" | "required" | "value"
-> & {
+type Props = Omit<HTMLTextareaAttributes, "class" | "disabled" | "readonly" | "ref" | "required" | "value"> & {
   class?: string;
   disabled?: boolean;
   readOnly?: boolean;
-  ref?: FieldTextareaProps["ref"];
+  ref?: HTMLTextAreaElement | null;
   required?: boolean;
   textareaClass?: string;
-  value?: FieldTextareaProps["value"];
+  value?: HTMLTextareaAttributes["value"];
 };
 
 let {
@@ -27,13 +25,12 @@ let {
 }: Props = $props();
 </script>
 
-<ArkField.Root {disabled} {readOnly} {required} class={`flex w-full min-w-0 max-w-full ${className ?? ""}`}>
-  <ArkField.Textarea
-    {...textareaProps}
-    bind:ref
-    bind:value
-    class={`min-h-64 min-w-64 flex-1 bg-transparent resize-none text-md outline-none placeholder:text-slate-400 disabled:cursor-not-allowed ${
-      textareaClass ?? ""
-    }`}
-  />
-</ArkField.Root>
+<Textarea
+  {...textareaProps}
+  bind:ref
+  bind:value
+  {disabled}
+  readonly={readOnly}
+  {required}
+  class={cn("resize-none", className, textareaClass)}
+/>

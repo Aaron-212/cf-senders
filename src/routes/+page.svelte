@@ -1,11 +1,18 @@
 <script lang="ts">
 import { enhance } from "$app/forms";
-import { createToaster } from "@ark-ui/svelte/toast";
 import type { SubmitFunction } from "@sveltejs/kit";
 import { untrack } from "svelte";
+import { toast } from "svelte-sonner";
 
-import { Collapsible, EmailInput, InputField, MultiEmailInput, PlainTextEditor, Toast } from "@/lib/components";
-import { ArrowUp, Bold, ChevronDown, Italic, Strikethrough, Underline } from "@lucide/svelte";
+import { EmailInput, InputField, MultiEmailInput, PlainTextEditor } from "@/lib/components";
+import * as Collapsible from "$lib/components/ui/collapsible/index.js";
+import { Button } from "@/lib/components/ui/button";
+import * as Field from "@/lib/components/ui/field";
+import { Toaster } from "@/lib/components/ui/sonner";
+import { buttonVariants } from "$lib/components/ui/button/index.js";
+import { ArrowUp, ChevronsUpDown } from "@lucide/svelte";
+
+import { isValidEmail } from "@/lib/email";
 
 import type { PageProps } from "./$types";
 
@@ -22,26 +29,54 @@ let sendsubject = $state<string>(initialValues?.subject ?? "");
 let sendbody = $state<string>(initialValues?.body ?? "");
 let sending = $state(false);
 
-const toaster = createToaster({
-  placement: "bottom-end",
-  overlap: true,
-  gap: 12,
-});
-const MAX_RECIPIENTS = 50;
+type FieldErrors = Partial<Record<"sendto" | "sendcc" | "sendbcc" | "sendreply" | "from" | "subject" | "body", string>>;
 
-const validateToRecipients = () => {
-  if (sendto.length === 0) {
-    toaster.error({
-      title: "Couldn’t send email",
-      description: "Add at least one To recipient.",
-    });
-    return false;
-  }
+let fieldErrors = $state<FieldErrors>({});
+let sendtoInput = $state("");
+let sendccInput = $state("");
+let sendbccInput = $state("");
+let sendreplyInput = $state("");
+
+const MAX_RECIPIENTS = 50;
+const MAX_SUBJECT_LENGTH = 998;
+const MAX_BODY_BYTES = 4 * 1024 * 1024;
+
+const hasInvalidEmailInput = (value: string) =>
+  value
+    .split(",")
+    .map((address) => address.trim())
+    .filter(Boolean)
+    .some((address) => !isValidEmail(address));
+
+const validateFields = () => {
+  const errors: FieldErrors = {};
+
+  if (sendto.length === 0) errors.sendto = "Add at least one To recipient.";
+  if (hasInvalidEmailInput(sendtoInput)) errors.sendto = "Enter a valid email address.";
+  if (hasInvalidEmailInput(sendccInput)) errors.sendcc = "Enter a valid email address.";
+  if (hasInvalidEmailInput(sendbccInput)) errors.sendbcc = "Enter a valid email address.";
+  if (hasInvalidEmailInput(sendreplyInput)) errors.sendreply = "Enter a valid email address.";
 
   if (sendto.length + sendcc.length + sendbcc.length > MAX_RECIPIENTS) {
-    toaster.error({
-      title: "Couldn’t send email",
-      description: `Use no more than ${MAX_RECIPIENTS} recipients in total.`,
+    errors.sendto = `Use no more than ${MAX_RECIPIENTS} recipients in total.`;
+  }
+
+  if (!isValidEmail(sendfrom)) errors.from = "Enter a valid From address.";
+  if (sendreply.length > 1) errors.sendreply = "Enter at most one Reply To address.";
+  if (sendsubject.trim().length === 0) errors.subject = "Enter a subject.";
+  if (sendsubject.length > MAX_SUBJECT_LENGTH) errors.subject = "The subject is too long.";
+  if (new TextEncoder().encode(sendbody).byteLength > MAX_BODY_BYTES) {
+    errors.body = "The message body is too large.";
+  }
+
+  fieldErrors = errors;
+  return Object.keys(errors).length === 0;
+};
+
+const validateToRecipients = () => {
+  if (!validateFields()) {
+    toast.error("Couldn’t send email", {
+      description: "Check the highlighted fields and try again.",
     });
     return false;
   }
@@ -51,6 +86,27 @@ const validateToRecipients = () => {
 
 const handleSendClick = (event: globalThis.MouseEvent) => {
   if (!validateToRecipients()) event.preventDefault();
+};
+
+const enterAdvancesFocus = (formElement: HTMLFormElement) => {
+  const handleKeydown = (event: globalThis.KeyboardEvent) => {
+    if (event.key !== "Enter" || event.isComposing || !(event.target instanceof HTMLInputElement)) return;
+
+    event.preventDefault();
+
+    const fields = Array.from(
+      formElement.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input:not([type="hidden"]), textarea'),
+    ).filter((field) => !field.disabled && !field.readOnly && field.getClientRects().length > 0);
+    const currentIndex = fields.indexOf(event.target);
+
+    fields[currentIndex + 1]?.focus();
+  };
+
+  formElement.addEventListener("keydown", handleKeydown);
+
+  return {
+    destroy: () => formElement.removeEventListener("keydown", handleKeydown),
+  };
 };
 
 const submitEmail: SubmitFunction = ({ cancel }) => {
@@ -73,14 +129,13 @@ const submitEmail: SubmitFunction = ({ cancel }) => {
         sendfrom = "";
         sendsubject = "";
         sendbody = "";
+        fieldErrors = {};
 
-        toaster.success({
-          title: "Email sent",
+        toast.success("Email sent", {
           description: "Email sent successfully.",
         });
       } else if (result.type === "failure") {
-        toaster.error({
-          title: "Couldn’t send email",
+        toast.error("Couldn’t send email", {
           description: result.data?.error ?? "The email could not be sent. Try again later.",
         });
       }
@@ -91,88 +146,164 @@ const submitEmail: SubmitFunction = ({ cancel }) => {
 };
 </script>
 
-<main class="flex h-[calc(100dvh-4rem)] min-h-0 flex-col gap-4">
-  <form method="POST" use:enhance={submitEmail} class="flex min-h-0 flex-1 flex-col gap-4">
-    <div class="grid grid-cols-[1fr_auto_auto] items-center gap-2 sm:gap-4">
-      <h1 class="text-4xl font-semibold">CF Senders</h1>
-      <Collapsible
-        defaultOpen
-        rootClass="contents"
-        triggerClass="col-start-2 row-start-1 flex h-10 flex-row items-center justify-center gap-2 rounded-full bg-white px-4 font-medium transition-colors hover:bg-slate-100 dark:bg-black dark:hover:bg-slate-900"
-        contentClass="col-span-3 row-start-2 mt-2 flex flex-col gap-2 overflow-hidden rounded-2xl bg-white px-4 py-3 lg:gap-4 dark:bg-black"
-      >
-        {#snippet trigger()}
-          <span>Metadata</span>
-        {/snippet}
-        {#snippet indicator()}
-          <ChevronDown class="size-4" />
-        {/snippet}
-        <MultiEmailInput
-          bind:value={sendto}
-          name="sendto"
-          label="To"
-          placeholder="Add a recipient"
-          addOnPaste
-          required
-        />
-        <div class="flex flex-col gap-2 lg:flex-row lg:gap-4">
-          <MultiEmailInput bind:value={sendcc} name="sendcc" label="CC" addOnPaste />
-          <MultiEmailInput bind:value={sendbcc} name="sendbcc" label="BCC" addOnPaste />
+<main class="mx-auto flex min-h-dvh w-full max-w-6xl p-4 sm:p-6 lg:p-8">
+  <form
+    method="POST"
+    use:enhance={submitEmail}
+    use:enterAdvancesFocus
+    class="flex min-h-0 w-full flex-1 flex-col gap-4"
+  >
+    <Collapsible.Root class="flex min-h-0 w-full flex-1 flex-col items-start gap-4">
+      <header class="flex w-full flex-col items-start gap-4 sm:flex-row">
+        <h1 class="text-2xl font-semibold">CF Senders</h1>
+        <div class="flex items-center gap-4 self-end sm:ml-auto sm:self-auto">
+          <Collapsible.Trigger class={buttonVariants({ variant: "outline", size: "lg" })}>
+            <span>Special recipients</span>
+            <ChevronsUpDown />
+          </Collapsible.Trigger>
+          <Button type="submit" onclick={handleSendClick} disabled={sending} size="lg">
+            <ArrowUp data-icon="inline-start" />
+            <span>{sending ? "Sending…" : "Send"}</span>
+          </Button>
         </div>
-        <MultiEmailInput bind:value={sendreply} name="sendreply" label="Reply To" addOnPaste max={1} />
-        <EmailInput bind:value={sendfrom} name="from" label="From" required />
-        <InputField bind:value={sendsubject} type="text" name="subject" label="Subject" required />
-      </Collapsible>
-      <button
-        type="submit"
-        onclick={handleSendClick}
-        disabled={sending}
-        class="col-start-3 row-start-1 flex h-10 flex-row items-center justify-center gap-2 rounded-full bg-blue-500 pr-5 pl-4 text-white transition-colors hover:bg-blue-500/80 disabled:cursor-not-allowed disabled:bg-slate-500"
-      >
-        <ArrowUp />
-        <span class="font-medium text-white">{sending ? "Sending…" : "Send"}</span>
-      </button>
-    </div>
-    <!--
-    <div class="flex flex-row gap-2">
-      <button
-        type="button"
-        aria-label="Bold"
-        class="bg-white dark:bg-black px-2 py-1 rounded-lg text-sm size-8 place-items-center"
-      >
-        <Bold class="size-4" />
-      </button>
-      <button
-        type="button"
-        aria-label="Italic"
-        class="bg-white dark:bg-black px-2 py-1 rounded-lg text-sm size-8 place-items-center"
-      >
-        <Italic class="size-4" />
-      </button>
-      <button
-        type="button"
-        aria-label="Underline"
-        class="bg-white dark:bg-black px-2 py-1 rounded-lg text-sm size-8 place-items-center"
-      >
-        <Underline class="size-4" />
-      </button>
-      <button
-        type="button"
-        aria-label="Strikethrough"
-        class="bg-white dark:bg-black px-2 py-1 rounded-lg text-sm size-8 place-items-center"
-      >
-        <Strikethrough class="size-4" />
-      </button>
-    </div>
-    -->
-    <PlainTextEditor
-      bind:value={sendbody}
-      name="body"
-      class="min-h-0 flex-1 overflow-hidden rounded-2xl bg-white p-2 text-lg dark:bg-black"
-      textareaClass="px-2 py-1"
-      style="min-height: 0; overflow-y: auto; resize: none;"
-    />
+      </header>
+
+      <Field.Set class="min-h-0 w-full flex-1">
+        <Field.Group>
+          <Field.Field data-invalid={Boolean(fieldErrors.sendto)}>
+            <Field.Label for="sendto">To</Field.Label>
+            <MultiEmailInput
+              bind:value={sendto}
+              bind:inputValue={sendtoInput}
+              id="sendto"
+              name="sendto"
+              placeholder="Add a recipient"
+              addOnPaste
+              invalid={Boolean(fieldErrors.sendto)}
+              onInputValueChange={() => (fieldErrors.sendto = undefined)}
+              onValueChange={() => (fieldErrors.sendto = undefined)}
+              onValueInvalid={() => (fieldErrors.sendto = "Enter a valid email address.")}
+              required
+            />
+            {#if fieldErrors.sendto}
+              <Field.Error>{fieldErrors.sendto}</Field.Error>
+            {/if}
+          </Field.Field>
+
+          <Collapsible.Content class="space-y-6">
+            <div class="grid gap-5 sm:grid-cols-2">
+              <Field.Field data-invalid={Boolean(fieldErrors.sendcc)}>
+                <Field.Label for="sendcc">CC</Field.Label>
+                <MultiEmailInput
+                  bind:value={sendcc}
+                  bind:inputValue={sendccInput}
+                  id="sendcc"
+                  name="sendcc"
+                  addOnPaste
+                  invalid={Boolean(fieldErrors.sendcc)}
+                  onInputValueChange={() => (fieldErrors.sendcc = undefined)}
+                  onValueChange={() => (fieldErrors.sendcc = undefined)}
+                  onValueInvalid={() => (fieldErrors.sendcc = "Enter a valid email address.")}
+                />
+                {#if fieldErrors.sendcc}
+                  <Field.Error>{fieldErrors.sendcc}</Field.Error>
+                {/if}
+              </Field.Field>
+
+              <Field.Field data-invalid={Boolean(fieldErrors.sendbcc)}>
+                <Field.Label for="sendbcc">BCC</Field.Label>
+                <MultiEmailInput
+                  bind:value={sendbcc}
+                  bind:inputValue={sendbccInput}
+                  id="sendbcc"
+                  name="sendbcc"
+                  addOnPaste
+                  invalid={Boolean(fieldErrors.sendbcc)}
+                  onInputValueChange={() => (fieldErrors.sendbcc = undefined)}
+                  onValueChange={() => (fieldErrors.sendbcc = undefined)}
+                  onValueInvalid={() => (fieldErrors.sendbcc = "Enter a valid email address.")}
+                />
+                {#if fieldErrors.sendbcc}
+                  <Field.Error>{fieldErrors.sendbcc}</Field.Error>
+                {/if}
+              </Field.Field>
+            </div>
+
+            <Field.Field data-invalid={Boolean(fieldErrors.sendreply)}>
+              <Field.Label for="sendreply">Reply to</Field.Label>
+              <MultiEmailInput
+                bind:value={sendreply}
+                bind:inputValue={sendreplyInput}
+                id="sendreply"
+                name="sendreply"
+                addOnPaste
+                invalid={Boolean(fieldErrors.sendreply)}
+                max={1}
+                onInputValueChange={() => (fieldErrors.sendreply = undefined)}
+                onValueChange={() => (fieldErrors.sendreply = undefined)}
+                onValueInvalid={({ reason }) =>
+                  (fieldErrors.sendreply =
+                    reason === "rangeOverflow"
+                      ? "Enter at most one Reply To address."
+                      : "Enter a valid email address.")}
+              />
+              {#if fieldErrors.sendreply}
+                <Field.Error>{fieldErrors.sendreply}</Field.Error>
+              {/if}
+            </Field.Field>
+          </Collapsible.Content>
+
+          <Field.Field data-invalid={Boolean(fieldErrors.from)}>
+            <Field.Label for="from">From</Field.Label>
+            <EmailInput
+              bind:value={sendfrom}
+              id="from"
+              name="from"
+              invalid={Boolean(fieldErrors.from)}
+              oninput={() => (fieldErrors.from = undefined)}
+              required
+            />
+            {#if fieldErrors.from}
+              <Field.Error>{fieldErrors.from}</Field.Error>
+            {/if}
+          </Field.Field>
+
+          <Field.Field data-invalid={Boolean(fieldErrors.subject)}>
+            <Field.Label for="subject">Subject</Field.Label>
+            <InputField
+              bind:value={sendsubject}
+              id="subject"
+              type="text"
+              name="subject"
+              invalid={Boolean(fieldErrors.subject)}
+              maxlength={MAX_SUBJECT_LENGTH}
+              oninput={() => (fieldErrors.subject = undefined)}
+              required
+            />
+            {#if fieldErrors.subject}
+              <Field.Error>{fieldErrors.subject}</Field.Error>
+            {/if}
+          </Field.Field>
+        </Field.Group>
+
+        <Field.Field class="min-h-0 flex-1" data-invalid={Boolean(fieldErrors.body)}>
+          <Field.Label for="message-body">Message (Plaintext)</Field.Label>
+          <PlainTextEditor
+            bind:value={sendbody}
+            id="message-body"
+            name="body"
+            placeholder="Write your message…"
+            class="min-h-80 flex-1"
+            aria-invalid={Boolean(fieldErrors.body)}
+            oninput={() => (fieldErrors.body = undefined)}
+          />
+          {#if fieldErrors.body}
+            <Field.Error>{fieldErrors.body}</Field.Error>
+          {/if}
+        </Field.Field>
+      </Field.Set>
+    </Collapsible.Root>
   </form>
 </main>
 
-<Toast {toaster} />
+<Toaster position="bottom-right" richColors closeButton />

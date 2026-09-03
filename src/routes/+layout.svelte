@@ -1,6 +1,7 @@
 <script lang="ts">
 import "@/styles/global.css";
 
+import { ModeWatcher } from "mode-watcher";
 import type { Snippet } from "svelte";
 
 let { children }: { children: Snippet } = $props();
@@ -10,6 +11,6 @@ let { children }: { children: Snippet } = $props();
   <title>CF Senders</title>
 </svelte:head>
 
-<div class="flex flex-col select-none m-8">
-  {@render children()}
-</div>
+<ModeWatcher />
+
+{@render children()}

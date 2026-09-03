@@ -1,62 +1,37 @@
-import { dev } from "$app/environment";
-import { error, type Handle } from "@sveltejs/kit";
+import type { HandleServerError } from "@sveltejs/kit";
 
-import { validateCloudflareAccess } from "@/lib/server/cloudflare-access";
+const getErrorDetails = (error: unknown) => {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    };
+  }
 
-const ERROR_MESSAGES: Readonly<Record<number, string>> = {
-  400: "Bad Request",
-  401: "Unauthorized",
-  403: "Forbidden",
-  404: "Not Found",
-  405: "Method Not Allowed",
-  408: "Request Timeout",
-  409: "Conflict",
-  410: "Gone",
-  413: "Content Too Large",
-  415: "Unsupported Media Type",
-  422: "Unprocessable Content",
-  429: "Too Many Requests",
-  500: "Internal Server Error",
-  501: "Not Implemented",
-  502: "Bad Gateway",
-  503: "Service Unavailable",
-  504: "Gateway Timeout",
+  return { message: String(error) };
 };
 
-export const handle: Handle = async ({ event, resolve }) => {
-  if (event.route.id === null) {
-    error(404, "Not Found");
+export const handleError: HandleServerError = ({ error, event, message, status }) => {
+  if (status < 500) {
+    return { message };
   }
 
-  if (dev) {
-    event.locals.access = {
-      sub: "local-development",
-      email: "local@localhost",
-    };
-  } else {
-    const access = await validateCloudflareAccess(event.request, event.platform?.env);
+  const errorId = crypto.randomUUID();
 
-    if (!access.authenticated) {
-      console.warn(
-        JSON.stringify({
-          message: "Cloudflare Access authentication failed",
-          path: event.url.pathname,
-          reason: access.reason,
-        }),
-      );
+  console.error(
+    JSON.stringify({
+      message: "Unhandled application error",
+      errorId,
+      method: event.request.method,
+      path: event.url.pathname,
+      status,
+      error: getErrorDetails(error),
+    }),
+  );
 
-      error(403, "Forbidden");
-    }
-
-    event.locals.access = access.claims;
-  }
-
-  const response = await resolve(event);
-  const isHtmlError = response.status >= 400 && response.headers.get("Content-Type")?.includes("text/html");
-
-  if (event.request.method === "GET" && isHtmlError) {
-    error(response.status, response.statusText || ERROR_MESSAGES[response.status] || "Request Failed");
-  }
-
-  return response;
+  return {
+    message,
+    id: errorId,
+  };
 };

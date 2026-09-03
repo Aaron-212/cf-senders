@@ -1,6 +1,8 @@
+import { dev } from "$app/environment";
 import { fail } from "@sveltejs/kit";
 
 import { isValidEmail } from "@/lib/email";
+import { validateCloudflareAccess } from "@/lib/server/cloudflare-access";
 
 import type { Actions } from "./$types";
 
@@ -87,6 +89,26 @@ export const actions = {
   default: async ({ request, platform }) => {
     const values = getFormValues(await request.formData());
     const recipients = [...values.sendto, ...values.sendcc, ...values.sendbcc];
+
+    if (!dev) {
+      const access = await validateCloudflareAccess(request, platform?.env);
+
+      if (!access.authenticated) {
+        console.warn(
+          JSON.stringify({
+            message: "Cloudflare Access authentication failed",
+            path: "/",
+            reason: access.reason,
+          }),
+        );
+
+        return fail(403, {
+          success: false,
+          error: "Your Cloudflare Access session is invalid or has expired. Sign in and try again.",
+          values,
+        });
+      }
+    }
 
     if (values.sendto.length === 0) {
       return fail(400, { success: false, error: "Add at least one To recipient.", values });

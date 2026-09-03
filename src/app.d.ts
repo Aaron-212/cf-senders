@@ -1,9 +1,7 @@
-import type { JWTPayload } from "jose";
-
 declare global {
   namespace App {
-    interface Locals {
-      access: JWTPayload;
+    interface Error {
+      id?: string;
     }
 
     interface Platform {

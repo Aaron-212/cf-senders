@@ -11,7 +11,7 @@ It runs as a SvelteKit application on Cloudflare Workers and uses a native
 - Set a sender, subject, and optional Reply-To address.
 - Validate email fields and Cloudflare Email Service errors on the server.
 - Limit each message to 50 total recipients and a 4 MiB body.
-- Require a valid Cloudflare Access JWT before any request reaches the app.
+- Revalidate the Cloudflare Access JWT immediately before sending email.
 - Adapt to light and dark color schemes.
 
 ## Prerequisites
@@ -43,10 +43,13 @@ Follow Cloudflare's guide to
 [protect one Worker](https://developers.cloudflare.com/workers/configuration/cloudflare-access/#protect-one-worker)
 and apply an authentication policy to all traffic.
 
-The app also validates the `Cf-Access-Jwt-Assertion` header before SvelteKit
-handles a request. It checks the signature against Cloudflare's rotating public
-keys as well as the issuer, audience, algorithm, and expiration. Missing or
-invalid configuration and tokens receive a `403 Forbidden` response.
+Cloudflare Access remains the outer authentication layer and checks protected
+traffic before it reaches the Worker. As defense in depth, the app revalidates
+the `Cf-Access-Jwt-Assertion` header when the user submits an email. It checks
+the signature against Cloudflare's rotating public keys as well as the issuer,
+audience, algorithm, and expiration. If the request reaches the action with a
+missing or invalid token, the action returns a form error and does not send the
+email.
 
 ### 3. Set the required bindings
 
@@ -110,10 +113,9 @@ mise exec -- aube install
 mise exec -- aubr dev
 ```
 
-Authentication deliberately fails closed. Starting the development server is
-useful for build and UI work, but requests without the Cloudflare platform
-bindings and a valid Access JWT return `403`. Use a protected deployed Worker
-for end-to-end email testing.
+The development server bypasses the Access check for local UI work. Use a
+protected deployed Worker to test Access authentication and end-to-end email
+sending.
 
 ## Commands
 
@@ -146,10 +148,10 @@ it.
 
 ## Security notes
 
-- Keep Cloudflare Access enabled as the outer authentication layer. The in-app
-  JWT verification is defense in depth.
+- Keep Cloudflare Access enabled as the outer authentication layer. The
+  send-time JWT verification is defense in depth.
 - Do not add a production authentication bypass. If Access or its variables are
-  misconfigured, the app is designed to remain unavailable.
+  misconfigured, email sending is designed to remain unavailable.
 - Restrict the email binding's allowed sender and destination addresses when
   the deployment does not need account-wide access.
 - Treat changes to the `EMAIL` binding, required secrets, asset handling, and

@@ -10,7 +10,7 @@ import { Button } from "@/lib/components/ui/button";
 import * as Field from "@/lib/components/ui/field";
 import { Toaster } from "@/lib/components/ui/sonner";
 import { buttonVariants } from "$lib/components/ui/button/index.js";
-import { ArrowUp, ChevronsUpDown } from "@lucide/svelte";
+import { ArrowUp, ChevronsUpDown, Trash2 } from "@lucide/svelte";
 
 import { isValidEmail } from "@/lib/email";
 
@@ -88,6 +88,21 @@ const handleSendClick = (event: globalThis.MouseEvent) => {
   if (!validateToRecipients()) event.preventDefault();
 };
 
+const clearInputs = () => {
+  sendto = [];
+  sendcc = [];
+  sendbcc = [];
+  sendreply = [];
+  sendfrom = "";
+  sendsubject = "";
+  sendbody = "";
+  sendtoInput = "";
+  sendccInput = "";
+  sendbccInput = "";
+  sendreplyInput = "";
+  fieldErrors = {};
+};
+
 const enterAdvancesFocus = (formElement: HTMLFormElement) => {
   const handleKeydown = (event: globalThis.KeyboardEvent) => {
     if (event.key !== "Enter" || event.isComposing || !(event.target instanceof HTMLInputElement)) return;
@@ -154,16 +169,43 @@ const submitEmail: SubmitFunction = ({ cancel }) => {
     class="flex min-h-0 w-full flex-1 flex-col gap-4"
   >
     <Collapsible.Root class="flex min-h-0 w-full flex-1 flex-col items-start gap-4">
-      <header class="flex w-full flex-col items-start gap-4 sm:flex-row">
+      <header class="flex w-full flex-row items-start">
         <h1 class="text-2xl font-semibold">CF Senders</h1>
-        <div class="flex items-center gap-4 self-end sm:ml-auto sm:self-auto">
-          <Collapsible.Trigger class={buttonVariants({ variant: "outline", size: "lg" })}>
-            <span>Special recipients</span>
-            <ChevronsUpDown />
+        <div class="flex items-center gap-2 self-end ml-auto sm:gap-4">
+          <Collapsible.Trigger
+            aria-label="Toggle special recipients"
+            class={buttonVariants({
+              variant: "outline",
+              size: "lg",
+              class:
+                "size-9 px-0 has-data-[icon=inline-start]:pl-0 sm:w-auto sm:px-2.5 sm:has-data-[icon=inline-start]:pl-2",
+            })}
+          >
+            <ChevronsUpDown data-icon="inline-start" />
+            <span class="hidden sm:inline">Special recipients</span>
           </Collapsible.Trigger>
-          <Button type="submit" onclick={handleSendClick} disabled={sending} size="lg">
+          <Button
+            type="button"
+            variant="destructive"
+            onclick={clearInputs}
+            disabled={sending}
+            size="lg"
+            aria-label="Clear"
+            class="size-9 px-0 has-data-[icon=inline-start]:pl-0 sm:w-auto sm:px-2.5 sm:has-data-[icon=inline-start]:pl-2"
+          >
+            <Trash2 data-icon="inline-start" />
+            <span class="hidden sm:inline">Clear</span>
+          </Button>
+          <Button
+            type="submit"
+            onclick={handleSendClick}
+            disabled={sending}
+            size="lg"
+            aria-label={sending ? "Sending" : "Send"}
+            class="size-9 px-0 has-data-[icon=inline-start]:pl-0 sm:w-auto sm:px-2.5 sm:has-data-[icon=inline-start]:pl-2"
+          >
             <ArrowUp data-icon="inline-start" />
-            <span>{sending ? "Sending…" : "Send"}</span>
+            <span class="hidden sm:inline">{sending ? "Sending…" : "Send"}</span>
           </Button>
         </div>
       </header>

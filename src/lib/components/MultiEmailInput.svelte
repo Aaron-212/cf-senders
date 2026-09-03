@@ -186,6 +186,7 @@ const handleBlur: FocusEventHandler<HTMLInputElement> = () => {
 
   <InputGroup.Input
     {id}
+    type="email"
     value={inputValue}
     placeholder={placeholder ?? ""}
     {disabled}
